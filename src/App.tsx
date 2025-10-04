@@ -1,6 +1,7 @@
 import { Satellite } from "lucide-react";
 import { Badge } from "./components/ui/badge";
 import { LocationSelector } from "./components/location-selector";
+import { SelectorDate } from "./components/selector-date";
 
 export function App() {
 
@@ -35,6 +36,7 @@ export function App() {
           {/* Painel de seleção para analise das informações */}
           <div className="lg:col-span-1 space-y-6">
             <LocationSelector />
+            <SelectorDate />
           </div>
         </div>
       </div>
