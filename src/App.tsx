@@ -5,15 +5,13 @@ import { SelectorDate } from "./components/selector-date";
 import { Card, CardContent } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { useState } from "react";
-import { APP_CONFIG, generateMockWeatherData, simulateAPICall, type Location, type WeatherData } from "./data/mock-weather-data";
+import { generateMockWeatherData, type DateRange, type Location, type WeatherData } from "./data/mock-weather-data";
 import { DataExport } from "./components/data-export";
 import { Separator } from "./components/ui/separator";
 import { WeatherDataVisualization } from "./components/weatcher-date-visualization";
+import { APIStatusIndicator } from "./components/api-status-indicator";
+import { convertAPITemperatureData, weatherAPI } from "./services/api-app";
 
-interface DateRange {
-  startDate: string
-  endDate: string
-}
 
 export function App() {
 
@@ -21,27 +19,74 @@ export function App() {
   const [selectedDateRange, setSelectedDateRange] = useState<DateRange | null>(null)
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [apiError, setApiError] = useState<string | null>(null)
 
-  const handleGenerateData = async () => {
+  async function handleGenerateData() {
     if (!selectedLocation || !selectedDateRange) return
 
     setIsLoading(true)
-    
-    // Simula chamada para API da NASA
-    await simulateAPICall(APP_CONFIG.API_SIMULATION_DELAY)
-    
-    const mockData = generateMockWeatherData(selectedLocation, selectedDateRange)
-    setWeatherData(mockData)
-    setIsLoading(false)
+    setApiError(null)
+
+    try {
+      // Chama a API real da NASA para temperatura
+      const temperatureResponse = await weatherAPI.getTemperatureData({
+        lat: selectedLocation.lat,
+        lon: selectedLocation.lng,
+        date: selectedDateRange.startDate,
+        hour: selectedDateRange.hour
+      })
+
+      console.log(temperatureResponse)
+
+      // Converte os dados da API para o formato interno
+      const temperatureData = convertAPITemperatureData(temperatureResponse)
+
+      // Gera dados mocados para outras métricas (até que as APIs estejam disponíveis)
+      const mockData = generateMockWeatherData(selectedLocation, selectedDateRange)
+      // Combina dados reais da temperatura com dados mocados
+      const combinedData: WeatherData = {
+        ...mockData,
+        temperature: {
+          ...temperatureData,
+          rawData: temperatureResponse
+        }
+      }
+      setWeatherData(combinedData)
+    } catch (error) {
+      console.error('Erro ao buscar dados da API:', error)
+
+      // Define o erro para exibição no status
+      setApiError(error instanceof Error ? error.message : 'Erro desconhecido')
+
+      // Fallback para dados mocados em caso de erro
+      const mockData = generateMockWeatherData(selectedLocation, selectedDateRange)
+      setWeatherData(mockData)
+    } finally {
+      setIsLoading(false)
+    }
   };
 
   const canGenerateData = selectedLocation && selectedDateRange
 
   const formatDateRange = (dateRange: DateRange) => {
+    const formatSingleDate = (date: string) => {
+      const formatted = new Date(date).toLocaleDateString('pt-BR');
+      return dateRange.hour !== undefined
+        ? `${formatted} às ${dateRange.hour.toString().padStart(2, '0')}:00`
+        : formatted;
+    };
+
     if (dateRange.startDate === dateRange.endDate) {
-      return new Date(dateRange.startDate).toLocaleDateString('pt-BR')
+      return formatSingleDate(dateRange.startDate);
     }
-    return `${new Date(dateRange.startDate).toLocaleDateString('pt-BR')} - ${new Date(dateRange.endDate).toLocaleDateString('pt-BR')}`
+
+    const start = new Date(dateRange.startDate).toLocaleDateString('pt-BR');
+    const end = new Date(dateRange.endDate).toLocaleDateString('pt-BR');
+    const hourInfo = dateRange.hour !== undefined
+      ? ` às ${dateRange.hour.toString().padStart(2, '0')}:00`
+      : '';
+
+    return `${start} - ${end}${hourInfo}`
   }
 
   return (
@@ -65,7 +110,11 @@ export function App() {
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Badge variant="outline">Dados Da NASA</Badge>
             <Badge variant="outline">Modelos Preditivos</Badge>
-            <Badge variant="outline">Demonstração</Badge>
+            <APIStatusIndicator
+              isLoading={isLoading}
+              hasAPIData={weatherData?.temperature?.rawData !== undefined}
+              error={apiError}
+            />
           </div>
         </div>
       </div>
@@ -95,7 +144,7 @@ export function App() {
                       <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                       Processando dados...
                     </>
-                  ): (
+                  ) : (
                     <>
                       <Satellite className="h-4 w-4 mr-2" />
                       Gerar Análise Climáticas
@@ -112,7 +161,7 @@ export function App() {
                 {canGenerateData && !weatherData && (
                   <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      Pronto para analisar dados climáticos para <strong>{selectedLocation?.name}</strong> 
+                      Pronto para analisar dados climáticos para <strong>{selectedLocation?.name}</strong>
                       {selectedDateRange && (
                         <> no período de <strong>{formatDateRange(selectedDateRange)}</strong></>
                       )}
@@ -124,7 +173,7 @@ export function App() {
 
             {/* Export sempre disponível quando há dados */}
             {weatherData && selectedLocation && selectedDateRange && (
-              <DataExport 
+              <DataExport
                 data={{
                   location: selectedLocation,
                   dateRange: selectedDateRange,
@@ -154,7 +203,7 @@ export function App() {
             )}
 
             {weatherData && selectedLocation && selectedDateRange && !isLoading && (
-              <WeatherDataVisualization 
+              <WeatherDataVisualization
                 weatherData={weatherData}
                 location={selectedLocation.name}
                 dateRange={formatDateRange(selectedDateRange)}

@@ -8,11 +8,10 @@ import { Popover } from "./ui/popover";
 import { PopoverContent, PopoverTrigger } from "@radix-ui/react-popover";
 import { Button } from "./ui/button";
 import { Calendar } from "./ui/calendar";
-
-interface DateRange {
-    startDate: string
-    endDate: string
-}
+import { Checkbox } from "./ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { format } from "date-fns";
+import type { DateRange } from "@/data/mock-weather-data";
 
 interface DateSelectorProps {
     onDateSelect: (dateRange: DateRange) => void
@@ -26,12 +25,23 @@ export function SelectorDate({ onDateSelect, selectedDateRange }: DateSelectorPr
     const [date, setDate] = useState<Date | undefined>(undefined)
     const [startDate, setStartDate] = useState<Date | undefined>(undefined)
     const [endDate, setEndDate] = useState<Date | undefined>(undefined)
+    const [selectedHour, setSelectedHour] = useState<number | undefined>(undefined)
+    const [includeHour, setIncludeHour] = useState(false)
 
     function handleApply() {
         if (dataSelectedType === 'single' && date) {
-            onDateSelect({ startDate: date.toDateString(), endDate: date.toDateString() })
+            onDateSelect({ 
+                startDate: format(date, "yyyy-MM-dd"),
+                endDate: format(date, "yyyy-MM-dd"),
+                hour: includeHour ? selectedHour : undefined
+            })
+            console.log(selectedHour)
         } else if (dataSelectedType === 'range' && startDate && endDate) {
-            onDateSelect({ startDate: startDate.toDateString(), endDate: endDate.toDateString() })
+            onDateSelect({
+                startDate: startDate.toDateString(),
+                endDate: endDate.toDateString(),
+                hour: includeHour ? selectedHour : undefined
+            })
         }
     }
 
@@ -185,6 +195,35 @@ export function SelectorDate({ onDateSelect, selectedDateRange }: DateSelectorPr
                         </div>
                     )
                 }
+                {/* Seleção de hora */}
+                <div className="border-t pt-4 space-y-3">
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="include-hour"
+                            checked={includeHour}
+                            onCheckedChange={(checked) => setIncludeHour(checked as boolean)}
+                        />
+                        <Label htmlFor="include-hour">Incluir hora específica</Label>
+                    </div>
+
+                    {includeHour && (
+                        <div className="space-y-2">
+                            <Label htmlFor="hour-select">Hora (0-23)</Label>
+                            <Select value={selectedHour?.toString()} onValueChange={(value) => setSelectedHour(parseInt(value))}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecione a hora" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {Array.from({ length: 24 }, (_, i) => (
+                                        <SelectItem key={i} value={i.toString()}>
+                                            {i.toString().padStart(2, '0')}:00
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                </div>
                 <Button
                     onClick={handleApply}
                     className="w-full"

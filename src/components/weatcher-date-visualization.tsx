@@ -1,9 +1,10 @@
 import { DISTRIBUTION_DATA, generateProbabilityData, TREND_DATA, type WeatherData } from "@/data/mock-weather-data";
-import { Cloud, Droplets, Eye, Gauge, Thermometer, Wind } from "lucide-react";
+import { Cloud, Droplets, Eye, Gauge, PieChart, Thermometer, Wind } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, Pie, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Progress } from "./ui/progress";
+import { APIDataDisplay } from "./data-api-display";
 
 interface WeatherDataVisualizationProps {
     weatherData: WeatherData
@@ -121,6 +122,7 @@ export function WeatherDataVisualization({ weatherData, location, dateRange }: W
                     </ResponsiveContainer>
                 </CardContent>
             </Card>
+            <APIDataDisplay weatherData={weatherData} />
         </div>
     )
 }

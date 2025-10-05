@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { env } from "@/env";
-import { apiMapBox } from "@/lib/axios";
+import { apiMapBox } from "@/services/axios";
 import type { Location } from "@/data/mock-weather-data";
 
 interface LocationSelectorProps {
@@ -80,6 +80,7 @@ export function LocationSelector({ onLocationSelect }: LocationSelectorProps) {
           lat: lat,
           lng: lng
         })
+        console.log(`longitude: ${lng} latitude: ${lat}`)
         setCitySearch(city)
         setLogintude(lng)
         setLatitude(lat)
