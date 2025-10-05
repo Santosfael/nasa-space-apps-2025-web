@@ -1,9 +1,46 @@
-import { Satellite } from "lucide-react";
+import { RefreshCw, Satellite } from "lucide-react";
 import { Badge } from "./components/ui/badge";
 import { LocationSelector } from "./components/location-selector";
 import { SelectorDate } from "./components/selector-date";
+import { Card, CardContent } from "./components/ui/card";
+import { Button } from "./components/ui/button";
+import { useState } from "react";
+import { APP_CONFIG, generateMockWeatherData, simulateAPICall, type Location, type WeatherData } from "./data/mock-weather-data";
+import { DataExport } from "./components/data-export";
+
+interface DateRange {
+  startDate: string
+  endDate: string
+}
 
 export function App() {
+
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
+  const [selectedDateRange, setSelectedDateRange] = useState<DateRange | null>(null)
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleGenerateData = async () => {
+    if (!selectedLocation || !selectedDateRange) return
+
+    setIsLoading(true)
+    
+    // Simula chamada para API da NASA
+    await simulateAPICall(APP_CONFIG.API_SIMULATION_DELAY)
+    
+    const mockData = generateMockWeatherData(selectedLocation, selectedDateRange)
+    setWeatherData(mockData)
+    setIsLoading(false)
+  };
+
+  const canGenerateData = selectedLocation && selectedDateRange
+
+  const formatDateRange = (dateRange: DateRange) => {
+    if (dateRange.startDate === dateRange.endDate) {
+      return new Date(dateRange.startDate).toLocaleDateString('pt-BR')
+    }
+    return `${new Date(dateRange.startDate).toLocaleDateString('pt-BR')} - ${new Date(dateRange.endDate).toLocaleDateString('pt-BR')}`
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,8 +72,65 @@ export function App() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Painel de seleção para analise das informações */}
           <div className="lg:col-span-1 space-y-6">
-            <LocationSelector />
-            <SelectorDate />
+            <LocationSelector
+              onLocationSelect={setSelectedLocation}
+            />
+            <SelectorDate
+              onDateSelect={setSelectedDateRange}
+              selectedDateRange={selectedDateRange}
+            />
+
+            <Card>
+              <CardContent className="p-4">
+                <Button
+                  onClick={handleGenerateData}
+                  disabled={!canGenerateData || isLoading}
+                  className="w-full"
+                  size="lg"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      Processando dados...
+                    </>
+                  ): (
+                    <>
+                      <Satellite className="h-4 w-4 mr-2" />
+                      Gerar Análise Climáticas
+                    </>
+                  )}
+                </Button>
+
+                {!canGenerateData && (
+                  <p className="text-sm text-muted-foreground mt-2 text-center">
+                    Selecione um local e período para continuar
+                  </p>
+                )}
+
+                {canGenerateData && !weatherData && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      Pronto para analisar dados climáticos para <strong>{selectedLocation?.name}</strong> 
+                      {selectedDateRange && (
+                        <> no período de <strong>{formatDateRange(selectedDateRange)}</strong></>
+                      )}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Export sempre disponível quando há dados */}
+            {weatherData && selectedLocation && selectedDateRange && (
+              <DataExport 
+                data={{
+                  location: selectedLocation,
+                  dateRange: selectedDateRange,
+                  weatherData: weatherData,
+                  exportDate: new Date().toISOString()
+                }}
+              />
+            )}
           </div>
         </div>
       </div>

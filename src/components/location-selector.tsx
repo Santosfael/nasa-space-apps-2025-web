@@ -8,10 +8,15 @@ import mapboxgl from "mapbox-gl";
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { env } from "@/env";
 import { apiMapBox } from "@/lib/axios";
+import type { Location } from "@/data/mock-weather-data";
+
+interface LocationSelectorProps {
+  onLocationSelect: (location: Location) => void
+}
 
 mapboxgl.accessToken = env.VITE_ACCESS_TOKEN_MAPBOX
 
-export function LocationSelector() {
+export function LocationSelector({ onLocationSelect }: LocationSelectorProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
@@ -50,7 +55,7 @@ export function LocationSelector() {
       mapRef.current = map
       markerRef.current = marker
 
-      return () => map.remove();
+      return () => map.remove()
     }
   }, [])
 
@@ -70,6 +75,11 @@ export function LocationSelector() {
       
       if (data.features && data.features.length > 0) {
         const [lng, lat] = data.features[0].center
+        onLocationSelect({
+          name: city,
+          lat: lat,
+          lng: lng
+        })
         setCitySearch(city)
         setLogintude(lng)
         setLatitude(lat)
