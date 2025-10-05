@@ -15,6 +15,10 @@ export function LocationSelector() {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const markerRef = useRef<mapboxgl.Marker | null>(null)
+  const [city, setCity] = useState("")
+  const [citySearch, setCitySearch] = useState("")
+  const [longitude, setLogintude] = useState<number>(-49.4697586)
+  const [latitutde, setLatitude] = useState<number>(-18.9755271)
 
   // Cidades populares mocadas
   const popularCities = [
@@ -26,8 +30,6 @@ export function LocationSelector() {
     { name: 'Sydney, Austrália', lat: -33.8688, lng: 151.2093 },
     { name: 'Uberlândia, Brasil', lat: -18.9165007, lng: -48.2812944 }
   ];
-
-  const [city, setCity] = useState("")
 
   useEffect(() => {
 
@@ -68,6 +70,9 @@ export function LocationSelector() {
       
       if (data.features && data.features.length > 0) {
         const [lng, lat] = data.features[0].center
+        setCitySearch(city)
+        setLogintude(lng)
+        setLatitude(lat)
 
         // Centraliza o mapa suavemente
         mapRef.current?.flyTo({
@@ -143,6 +148,16 @@ export function LocationSelector() {
             }
           </div>
         </div>
+
+        {citySearch && (
+          <div className="p-3 bg-muted rounded-lg">
+            <p className="text-sm font-medium">Local selecionado:</p>
+            <p className="text-sm text-muted-foreground">{city}</p>
+            <p className="text-xs text-muted-foreground">
+              Coordenadas: {latitutde.toFixed(4)}, {longitude.toFixed(4)}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
