@@ -8,6 +8,7 @@ import { useState } from "react";
 import { APP_CONFIG, generateMockWeatherData, simulateAPICall, type Location, type WeatherData } from "./data/mock-weather-data";
 import { DataExport } from "./components/data-export";
 import { Separator } from "./components/ui/separator";
+import { WeatherDataVisualization } from "./components/weatcher-date-visualization";
 
 interface DateRange {
   startDate: string
@@ -150,6 +151,14 @@ export function App() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {weatherData && selectedLocation && selectedDateRange && !isLoading && (
+              <WeatherDataVisualization 
+                weatherData={weatherData}
+                location={selectedLocation.name}
+                dateRange={formatDateRange(selectedDateRange)}
+              />
             )}
 
             {!weatherData && !isLoading && (
