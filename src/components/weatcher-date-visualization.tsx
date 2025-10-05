@@ -34,33 +34,12 @@ export function WeatherDataVisualization({ weatherData, location, dateRange }: W
             bgColor: 'bg-blue-50',
         },
         {
-            title: 'Velocidade do Vento',
-            icon: Wind,
-            data: weatherData.windSpeed,
-            color: 'text-gray-500',
-            bgColor: 'bg-gray-50',
-        },
-        {
-            title: 'Qualidade do Ar',
-            icon: Gauge,
-            data: weatherData.airQuality,
-            color: 'text-green-500',
-            bgColor: 'bg-green-50',
-        },
-        {
             title: 'Umidade',
             icon: Cloud,
             data: weatherData.humidity,
             color: 'text-cyan-500',
             bgColor: 'bg-cyan-50',
-        },
-        {
-            title: 'Visibilidade',
-            icon: Eye,
-            data: weatherData.visibility,
-            color: 'text-purple-500',
-            bgColor: 'bg-purple-50',
-        },
+        }
     ]
 
     return (
@@ -101,27 +80,6 @@ export function WeatherDataVisualization({ weatherData, location, dateRange }: W
                     })
                 }
             </div>
-
-            {/* Apresentação dos gráficos tendência */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Tedência ao longo do período</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={trendData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="day" />
-                            <YAxis />
-                            <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="temperatura" stroke="#f97316" strokeWidth={2} name="Temperatura (°C)" />
-                            <Line type="monotone" dataKey="precipitacao" stroke="#3b82f6" strokeWidth={2} name="Precipitação (mm)" />
-                            <Line type="monotone" dataKey="vento" stroke="#6b7280" strokeWidth={2} name="Vento (km/h)" />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
             <APIDataDisplay weatherData={weatherData} />
         </div>
     )

@@ -10,7 +10,7 @@ import { DataExport } from "./components/data-export";
 import { Separator } from "./components/ui/separator";
 import { WeatherDataVisualization } from "./components/weatcher-date-visualization";
 import { APIStatusIndicator } from "./components/api-status-indicator";
-import { convertAPITemperatureData, weatherAPI } from "./services/api-app";
+import { convertAPIHumidityData, convertAPIPrecipitationData, convertAPITemperatureData, weatherAPI } from "./services/api-app";
 
 
 export function App() {
@@ -28,30 +28,69 @@ export function App() {
     setApiError(null)
 
     try {
-      // Chama a API real da NASA para temperatura
-      const temperatureResponse = await weatherAPI.getTemperatureData({
+      const apiParams = {
         lat: selectedLocation.lat,
         lon: selectedLocation.lng,
         date: selectedDateRange.startDate,
         hour: selectedDateRange.hour
-      })
+      };
 
-      console.log(temperatureResponse)
+      // Tenta buscar todos os dados da API em paralelo
+      const [temperatureResponse, precipitationResponse, humidityResponse] = await Promise.allSettled([
+        weatherAPI.getTemperatureData(apiParams),
+        weatherAPI.getPrecipitationData(apiParams),
+        weatherAPI.getHumidityData(apiParams)
+      ]);
 
-      // Converte os dados da API para o formato interno
-      const temperatureData = convertAPITemperatureData(temperatureResponse)
+      // Gera dados mocados como base
+      const mockData = generateMockWeatherData(selectedLocation, selectedDateRange);
 
-      // Gera dados mocados para outras métricas (até que as APIs estejam disponíveis)
-      const mockData = generateMockWeatherData(selectedLocation, selectedDateRange)
-      // Combina dados reais da temperatura com dados mocados
+      // Processa dados de temperatura
+      let temperatureData = mockData.temperature;
+      if (temperatureResponse.status === 'fulfilled') {
+        temperatureData = {
+          ...convertAPITemperatureData(temperatureResponse.value),
+          rawData: temperatureResponse.value
+        };
+      }
+
+      // Processa dados de precipitação
+      let precipitationData = mockData.precipitation;
+      if (precipitationResponse.status === 'fulfilled') {
+        precipitationData = {
+          ...convertAPIPrecipitationData(precipitationResponse.value),
+          rawData: precipitationResponse.value
+        };
+      }
+
+      // Processa dados de umidade
+      let humidityData = mockData.humidity;
+      if (humidityResponse.status === 'fulfilled') {
+        humidityData = {
+          ...convertAPIHumidityData(humidityResponse.value),
+          rawData: humidityResponse.value
+        };
+      }
+
+      // Combina dados reais com dados mocados
       const combinedData: WeatherData = {
         ...mockData,
-        temperature: {
-          ...temperatureData,
-          rawData: temperatureResponse
-        }
+        temperature: temperatureData,
+        precipitation: precipitationData,
+        humidity: humidityData
+      };
+
+      setWeatherData(combinedData);
+
+      // Verifica se alguma API falhou
+      const failedAPIs = [];
+      if (temperatureResponse.status === 'rejected') failedAPIs.push('Temperatura');
+      if (precipitationResponse.status === 'rejected') failedAPIs.push('Precipitação');
+      if (humidityResponse.status === 'rejected') failedAPIs.push('Umidade');
+
+      if (failedAPIs.length > 0) {
+        setApiError(`APIs indisponíveis: ${failedAPIs.join(', ')}`);
       }
-      setWeatherData(combinedData)
     } catch (error) {
       console.error('Erro ao buscar dados da API:', error)
 
