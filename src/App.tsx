@@ -7,6 +7,7 @@ import { Button } from "./components/ui/button";
 import { useState } from "react";
 import { APP_CONFIG, generateMockWeatherData, simulateAPICall, type Location, type WeatherData } from "./data/mock-weather-data";
 import { DataExport } from "./components/data-export";
+import { Separator } from "./components/ui/separator";
 
 interface DateRange {
   startDate: string
@@ -130,6 +131,62 @@ export function App() {
                   exportDate: new Date().toISOString()
                 }}
               />
+            )}
+          </div>
+
+          {/* Área de visualização */}
+          <div className="lg:col-span-2">
+            {isLoading && (
+              <Card>
+                <CardContent className="p-8">
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+                    <div className="text-center">
+                      <h3 className="font-medium">Processando dados da NASA</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Analisando dados de observação da Terra...
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {!weatherData && !isLoading && (
+              <Card>
+                <CardContent className="p-8">
+                  <div className="text-center space-y-4">
+                    <div className="p-4 bg-muted rounded-full w-16 h-16 mx-auto flex items-center justify-center">
+                      <Satellite className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium mb-2">Bem-vindo ao Dashboard Climático</h3>
+                      <p className="text-muted-foreground">
+                        Selecione uma localização e período para começar a análise dos dados climáticos da NASA.
+                      </p>
+                    </div>
+                    <Separator className="my-6" />
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div className="text-center">
+                        <h4 className="font-medium">Dados Disponíveis</h4>
+                        <ul className="text-muted-foreground mt-1">
+                          <li>Temperatura</li>
+                          <li>Precipitação</li>
+                          <li>Qualidade do Ar</li>
+                        </ul>
+                      </div>
+                      <div className="text-center">
+                        <h4 className="font-medium">Recursos</h4>
+                        <ul className="text-muted-foreground mt-1">
+                          <li>Gráficos Interativos</li>
+                          <li>Mapas de Calor</li>
+                          <li>Export de Dados</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>
